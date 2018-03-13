@@ -2,7 +2,7 @@
 import Sound.Tidal.OscStream
 
 
-let p5Shape = dirt {cpsStamp = False, latency = 0}
+let p5Shape = dirt {cpsStamp = False, latency = 0.4}
     p5Slang = superDirtSlang {timestamp = NoStamp,
                               preamble = []
                              }
@@ -16,12 +16,14 @@ let p5Shape = dirt {cpsStamp = False, latency = 0}
                         return $ \p -> do p5 p
                                           d p
 
+
 x1 <- combinedStream
 
-x1 $ sound "bd(3,8)"
-  # scene "bing"
-
-
-
 let hush = mapM_ ($ silence) [d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,x1]
+
 let solo = (>>) hush
+
+x1 $ (every 3 (fast 2) $ chunk 4 (hurry 2) $ sound "<bd mt lt>(3,8)")
+  # pan sine
+  # speed 2
+
