@@ -34,6 +34,7 @@ void oscEvent(OscMessage m) {
   int i;
   String sample = null;
   float pan = 0.5;
+  float gain = 1;
 
   for(i = 0; i < m.typetag().length(); ++i) {
     String name = m.get(i).stringValue();
@@ -44,6 +45,9 @@ void oscEvent(OscMessage m) {
       case "pan":
         pan = m.get(i+1).floatValue();
         break;
+      case "gain":
+        gain = m.get(i+1).floatValue();
+        break;
       case "scene":
         String scene = m.get(i+1).stringValue();
         println("scene: " + scene);
@@ -53,7 +57,7 @@ void oscEvent(OscMessage m) {
   }
   
   if (sample != null) {
-    things.add(new Thing(sample, pan));
+    things.add(new Thing(sample, pan, gain));
   }
 }
 
@@ -62,12 +66,14 @@ class Thing {
   int life;
   String txt;
   float pan;
+  float gain;
   
-  Thing(String txt, float pan) {
+  Thing(String txt, float pan, float gain) {
     start = millis();
     life = 550;
     this.txt = txt;
     this.pan = pan;
+    this.gain = gain;
   }
   
   boolean alive () {
@@ -81,8 +87,8 @@ class Thing {
     if (progress < 1) {
       fill(255,255,255,int((1.0-progress)*255.0));
       textAlign(CENTER);
-      text(txt,width*pan,height/2);
-      //ellipse(width*pan,height/2, 20,20);
+      //text(txt,width*pan,height/2);
+      ellipse(width*pan,height/2, 100*gain,100*gain);
     }
   }
 }
