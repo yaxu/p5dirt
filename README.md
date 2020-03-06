@@ -2,29 +2,18 @@
 
 A quick example for sending OSC messages to processing as well as superdirt.
 
-Save the BootTidal.hs file somewhere, and point your editor at it. For
-example if you're using atom, open the preferences for the tidalcycles
-package, and put the full path to the file (*including* the filename)
-in the "Boot Tidal Path" setting.
+You'll need to take your existing BootTidal.hs and change the startTidal bit to ...
 
-Then restart atom.
-
-With the included processing example, the following pattern should make
-circles appear on the screen:
-
-```
-d1 $ slow 4 $ sound "bd*32"
-  # pan sine
-  # gain (slow 2 $ range 0.5 1 saw)
+```haskell
+:{
+tidal <- startMulti [superdirtTarget {oLatency = 0.2, oAddress = "127.0.0.1", oPort = 57120
+                                     },
+                     superdirtTarget {oLatency = 0.2, oAddress = "127.0.0.1", oPort = 2020,
+                                      oTimestamp = NoStamp
+                                     }
+                    ] (defaultConfig {cFrameTimespan = 1/20})
+:}
 ```
 
-You can add in custom parameters for processing to work with, e.g.:
+Then the included processing example will visualise events in each orbit as binary transitions.
 
-```
-let scene = pS "scene"
-
-d1 $ slow 4 $ sound "bd*32"
-  # pan sine
-  # gain (slow 2 $ range 0.5 1 saw)
-  # scene "blue red"
-```

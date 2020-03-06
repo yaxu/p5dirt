@@ -1,94 +1,126 @@
 
+import java.util.Iterator;
+
 import oscP5.*;
 import netP5.*;
 
+
 OscP5 osc;
 
-ArrayList<Thing> things = new ArrayList<Thing>();
+ArrayList<Orbit> orbits = new ArrayList<Orbit>();
 PFont font;
+float cps = 0;
+float showCycles = 4;
+int orbitn = 12;
+float lastCycle = 0;
+float lastTime = 0;
+int orbitHeight = 15;
+int h = orbitHeight - 4;
 
 void setup() {
+  surface.setTitle("");
   smooth();
-  size(800, 800);
+  size(1024, 180);
   textSize(40);
-  osc = new OscP5(this, 1818);
+  osc = new OscP5(this, 2020);
   font = loadFont("Inconsolata-48.vlw");
   textFont(font,48);
+  synchronized(orbits) {
+    for (int i = 0; i < orbitn; ++i) {
+      orbits.add(new Orbit());
+    }
+  }
 }
 
 void draw() {
-  background(0);
-
-  for (int i = things.size() - 1; i >= 0; i--) {
-    Thing thing = things.get(i);
-      if (thing.alive()) {
-        thing.draw();
-      }
-      else {
-        things.remove(i);
-      }
+  background(255);
+  float now = millis();
+  float elapsed = now - lastTime;
+  float cycle = ((elapsed * cps)/1000) + lastCycle;
+  synchronized(orbits) {
+    pushMatrix();
+    for (int i = 0; i < orbitn; ++i) {
+      Orbit o = orbits.get(i);
+      translate(0,orbitHeight);
+      o.draw(cycle);
+    }
+    popMatrix();
   }
 }
 
 void oscEvent(OscMessage m) {
+  float t = millis();
   int i;
-  String sample = null;
-  float pan = 0.5;
-  float gain = 1;
+  int orbit = -1;
+  float cycle = -1;
+  
 
   for(i = 0; i < m.typetag().length(); ++i) {
     String name = m.get(i).stringValue();
     switch(name) {
-      case "s":
-        sample = m.get(i+1).stringValue();
+      case "orbit":
+        orbit = m.get(i+1).intValue();
         break;
-      case "pan":
-        pan = m.get(i+1).floatValue();
+      case "cycle":
+        cycle = m.get(i+1).floatValue();
         break;
-      case "gain":
-        gain = m.get(i+1).floatValue();
-        break;
-      case "scene":
-        String scene = m.get(i+1).stringValue();
-        println("scene: " + scene);
+      case "cps":
+        cps = m.get(i+1).floatValue();
         break;
     }
     ++i;
   }
-  
-  if (sample != null) {
-    things.add(new Thing(sample, pan, gain));
+  if (orbit >= 0 && cycle >= 0) {
+    synchronized(orbits) {
+      Event event = new Event(cycle, t);
+      Orbit o = orbits.get(orbit % orbitn);
+      lastCycle = cycle;
+      lastTime = t;
+      o.add(event);
+    }
   }
 }
 
-class Thing {
-  int start;
-  int life;
-  String txt;
-  float pan;
-  float gain;
+class Orbit {
+  Boolean state = false;
+  ArrayList<Event> events = new ArrayList<Event>();
   
-  Thing(String txt, float pan, float gain) {
-    start = millis();
-    life = 550;
-    this.txt = txt;
-    this.pan = pan;
-    this.gain = gain;
+  void add (Event event) {
+    events.add(0,event);
+    state = !state;
   }
   
-  boolean alive () {
-    // print("start: " + start + " life " + life + " now " + millis() + "\n");
-    return((start+life) >= millis());
+  void draw(float cycle) {
+    Boolean state = this.state;
+    noFill();
+    beginShape();
+    strokeWeight(2);
+    stroke(0);
+    vertex(width, state ? 0 : h);
+    Iterator<Event> i = events.iterator();
+    while (i.hasNext()) {
+      Event event = i.next();
+      float pos = (event.cycle-(cycle-showCycles))/showCycles;
+      if (pos < 0) {
+        i.remove();
+      }
+      else {
+        vertex(width * pos, state ? 0 : h);
+        vertex(width * pos, state ? h : 0);
+        state = !state;
+      }
+    }  
+    vertex(0, state ? 0 : h);
+    endShape();
   }
+}
+
+class Event {
+  float cycle;
+  float start;
   
-  void draw () {
-    float age = millis() - start;
-    float progress = age/life;
-    if (progress < 1) {
-      fill(255,255,255,int((1.0-progress)*255.0));
-      textAlign(CENTER);
-      //text(txt,width*pan,height/2);
-      ellipse(width*pan,height/2, 100*gain,100*gain);
-    }
+  Event(float cycle, float start) {
+    this.cycle = cycle;
+    this.start = start;
   }
 }
