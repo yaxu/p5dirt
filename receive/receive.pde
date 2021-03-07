@@ -10,15 +10,16 @@ OscP5 osc;
 ArrayList<Orbit> orbits = new ArrayList<Orbit>();
 PFont font;
 float cps = 0;
-float showCycles = 4;
-int orbitn = 12;
+float showCycles = 2;
+int orbitn = 7;
 float lastCycle = 0;
 float lastTime = 0;
-int orbitHeight = 15;
+int orbitHeight = 16;
 int h = orbitHeight - 4;
 
 void setup() {
-  surface.setTitle("");
+  frameRate(30);
+  surface.setTitle("lines");
   smooth();
   size(1024, 180);
   textSize(40);
@@ -33,13 +34,13 @@ void setup() {
 }
 
 void draw() {
-  background(255);
+  background(0,255,0);
   float now = millis();
   float elapsed = now - lastTime;
   float cycle = ((elapsed * cps)/1000) + lastCycle;
   synchronized(orbits) {
     pushMatrix();
-    for (int i = 0; i < orbitn; ++i) {
+    for (int i = 1; i < orbitn; ++i) {
       Orbit o = orbits.get(i);
       translate(0,orbitHeight);
       o.draw(cycle);
@@ -94,8 +95,8 @@ class Orbit {
     Boolean state = this.state;
     noFill();
     beginShape();
-    strokeWeight(2);
-    stroke(0);
+    strokeWeight(3);
+    stroke(255,255,255);
     vertex(width, state ? 0 : h);
     Iterator<Event> i = events.iterator();
     while (i.hasNext()) {
